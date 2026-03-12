@@ -8,7 +8,7 @@ ZenNote is a high-performance Markdown note-taking suite designed for power user
 ## 📸 Interface Preview
 | **Main Dashboard** | **Rich Preview Mode** | **Editor & LaTeX** |
 |---|---|---|
-| ![Home](./screenshots/Screenshot_2026-03-12-06-43-33-575_zennote.apposf.jpg)![Home](./screenshots/![Home](./screenshots/Screenshot_2026-03-12-06-43-33-575_zennote.apposf.jpg))![Home](./screenshots/Screenshot_2026-03-12-06-41-20-814_zennote.apposf.jpg) | ![Preview](./screenshots/Screenshot_2026-03-12-06-41-23-042_zennote.apposf.jpg) | ![Editor](./screenshots/Screenshot_2026-03-12-06-43-25-259_zennote.apposf.jpg) |
+| ![Home](./screenshots/Screenshot_2026-03-12-06-43-33-575_zennote.apposf.jpg)![Home](./screenshots/Screenshot_2026-03-12-06-43-19-136_zennote.apposf.jpg)![Home](./screenshots/Screenshot_2026-03-12-06-41-20-814_zennote.apposf.jpg) | ![Preview](./screenshots/Screenshot_2026-03-12-06-41-23-042_zennote.apposf.jpg) | ![Editor](./screenshots/Screenshot_2026-03-12-06-43-25-259_zennote.apposf.jpg) |
 
 ---
 
@@ -39,6 +39,6 @@ ZenNote is a high-performance Markdown note-taking suite designed for power user
 
 1. **Clone & Run:**
    ```bash
-   git clone [https://github.com/yourusername/zennote.git](https://github.com/yourusername/zennote.git)
+   git clone [https://github.com/malik-softwebs/ZenNotes.git](https://github.com/malik-softwebs/ZenNotes.git)
    cd zennote
-   # Open index.html in any modern browser
+   # Open index.html in yourmodernme modern browser
