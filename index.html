@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ZenNote</title> 
+    
+    <!-- Icons & Fonts -->
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Nastaliq+Urdu:wght@400..700&display=swap" rel="stylesheet">
+
+    <!-- Markdown & Syntax Highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    
+    <!-- KaTeX for Math -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js" defer></script>
+    
+    <!-- Emoji -->
+    <script src="https://unpkg.com/twemoji@14.0.2/dist/twemoji.min.js" defer></script>
+
+    <!-- App Styles -->
+    <style>
+        /* --- VARIABLES & THEME --- */
+:root {
+    --app-font: 'Plus Jakarta Sans', sans-serif;
+    --urdu-font: 'Noto Nastaliq Urdu', serif;
+    --fs: 16px; /* Base font size, configurable in settings */
+    --ff: var(--app-font); /* Editor font family, configurable in editor (per note) */
+    
+    /* Light Theme Palette */
+    --bg-body: #f8fafc;
+    --bg-app: #ffffff;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --border-color: #f1f5f9;
+    --input-bg: #f8fafc;
+    --shadow-soft: 0 0 100px rgba(0,0,0,0.05);
+    
+    /* NOTE COLORS */
+    --note-white: #ffffff;
+    --note-blue: #f0f9ff;
+    --note-red: #fef2f2;
+    --note-green: #f0fdf4;
+    --note-yellow: #fffbeb;
+    
+    /* Accents */
+    --primary: #0f172a;
+    --primary-text: #ffffff;
+    --accent-blue: #2563eb;
+    --accent-purple: #9333ea;
+}
+
+/* --- BASE STYLES --- */
+body { 
+    margin: 0; 
+    font-family: var(--app-font); 
+    background: var(--bg-body); 
+    color: var(--text-main); 
+    overflow: hidden; 
+    transition: background 0.3s, color 0.3s; 
+}
+
+/* Layout */
+.app-container { 
+    max-width: 450px; 
+    margin: 0 auto; 
+    height: 100vh; 
+    background: var(--bg-app); 
+    position: relative; 
+    overflow: hidden; 
+    box-shadow: var(--shadow-soft); 
+}
+
+.view { 
+    position: absolute; 
+    inset: 0; 
+    background: var(--bg-app); 
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+    z-index: 10; 
+    display: flex; 
+    flex-direction: column; 
+    pointer-events: none; 
+    opacity: 0; 
+    transform: scale(0.98); 
+}
+.view-active { opacity: 1; transform: scale(1); z-index: 30; pointer-events: auto; }
+
+/* Header */
+.app-header { 
+    padding: 2rem 1.5rem; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: flex-start; 
+    background: rgba(255,255,255,0.8); 
+    backdrop-filter: blur(12px); 
+    position: sticky; 
+    top: 0; 
+    z-index: 40; 
+}
+
+.header-branding h1 { 
+    font-size: 1.875rem; 
+    font-weight: 900; 
+    letter-spacing: -0.05em; 
+    margin: 0; 
+}
+.subtitle { 
+    font-size: 10px; 
+    font-weight: 700; 
+    color: var(--text-muted); 
+    text-transform: uppercase; 
+    letter-spacing: 2px; 
+    margin-top: 4px; 
+}
+.header-actions { display: flex; gap: 0.5rem; }
+
+/* Buttons & Inputs */
+button { cursor: pointer; border: none; outline: none; background: none; font-family: inherit; }
+.icon-btn { 
+    width: 3rem; height: 3rem; 
+    border-radius: 1rem; 
+    background: var(--input-bg); 
+    color: var(--text-muted); 
+    font-size: 1.5rem; 
+    display: flex; align-items: center; justify-content: center; 
+    transition: 0.2s; 
+}
+.icon-btn:hover { background: var(--border-color); }
+.fab-btn { 
+    position: fixed; bottom: 2rem; right: 2rem; 
+    width: 4rem; height: 4rem; 
+    background: var(--primary); 
+    color: var(--primary-text); 
+    border-radius: 1.5rem; 
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); 
+    display: flex; align-items: center; justify-content: center; 
+    font-size: 2.25rem; 
+    z-index: 50; 
+    transition: transform 0.2s; 
+}
+.fab-btn:active { transform: scale(0.9); }
+
+.search-container { padding: 0 1.5rem 1rem; }
+.search-bar { position: relative; display: flex; align-items: center; }
+.search-bar i { position: absolute; left: 1rem; color: #cbd5e1; font-size: 1.25rem; }
+.search-bar input { 
+    width: 100%; 
+    background: var(--input-bg); 
+    border: none; 
+    border-radius: 1rem; 
+    padding: 1rem 1rem 1rem 3rem; 
+    font-size: 0.875rem; 
+    color: var(--text-main); 
+    outline: none; 
+}
+.tag-filter-area { margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* Grid & Notes */
+.content-scroll { flex: 1; overflow-y: auto; padding: 0 1.5rem 6rem; }
+.content-scroll::-webkit-scrollbar { display: none; }
+.notes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+.notes-grid.skeleton-loading .note-card { /* Styles for skeleton items */
+    background: linear-gradient(90deg, var(--input-bg) 25%, var(--border-color) 50%, var(--input-bg) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-pulse 1.5s infinite;
+}
+@keyframes skeleton-pulse {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Layout Varieties (Only Grid and List remain) */
+.layout-list .notes-grid { grid-template-columns: 1fr; }
+
+.note-card { 
+    position: relative; padding: 1.5rem; border-radius: 2.5rem; min-height: 12rem; 
+    display: flex; flex-direction: column; justify-content: space-between; 
+    border: 1px solid var(--border-color); cursor: pointer; 
+    transition: transform 0.2s, background 0.3s; 
+    background-color: var(--note-white); /* Logic handled by JS injecting var() */
+}
+.note-card:active { transform: scale(0.98); }
+.note-card-title { /* For cards on dashboard */
+    font-size: 1rem; 
+    font-weight: 800; 
+    line-height: 1.4; 
+    display: -webkit-box; 
+    -webkit-line-clamp: 2; /* Max 2 lines for title */
+    -webkit-box-orient: vertical; 
+    overflow: hidden; 
+    margin: 0 0 0.5rem 0;
+}
+.note-card-body-preview { /* For brief body on cards */
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* Max 3 lines for body preview */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.note-date { 
+    font-size: 9px; 
+    font-weight: 900; 
+    color: var(--text-muted); 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+}
+.tag-pill { 
+    display: inline-block; padding: 2px 8px; 
+    border-radius: 8px; background: rgba(0,0,0,0.05); 
+    color: var(--text-muted); font-size: 9px; 
+    font-weight: 800; text-transform: uppercase; 
+    margin-right: 4px; margin-bottom: 4px; 
+}
+
+/* Editor */
+.editor-header { 
+    padding: 1rem; 
+    display: flex; justify-content: space-between; align-items: center; 
+    border-bottom: 1px solid var(--border-color); 
+}
+.editor-actions { display: flex; gap: 0.5rem; align-items: center; }
+.pill-btn { 
+    padding: 0.5rem 0.75rem; 
+    font-size: 10px; 
+    font-weight: 900; 
+    text-transform: uppercase; 
+    background: var(--input-bg); 
+    color: var(--text-muted); 
+    border-radius: 0.75rem; 
+}
+.pill-btn-primary { 
+    padding: 0.5rem 1rem; 
+    font-size: 10px; 
+    font-weight: 900; 
+    text-transform: uppercase; 
+    background: #eff6ff; 
+    color: #2563eb; 
+    border-radius: 0.75rem; 
+    letter-spacing: 1px; 
+}
+.action-btn { 
+    background: var(--primary); 
+    color: var(--primary-text); 
+    padding: 0.6rem 1.5rem; 
+    border-radius: 1rem; 
+    font-size: 0.75rem; 
+    font-weight: 700; 
+}
+.back-btn { padding: 0.5rem; color: var(--text-muted); font-size: 2rem; display: flex; }
+
+.editor-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+
+/* Note Title Input Section */
+.editor-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-app); /* Match header/toolbar background */
+}
+.note-title-input {
+    flex-grow: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-main);
+    padding: 0.5rem 0;
+    line-height: 1.2;
+}
+.note-title-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+.icon-btn-small { /* For AI title button */
+    width: 2.5rem; height: 2.5rem;
+    border-radius: 0.75rem;
+    background: var(--input-bg);
+    color: var(--accent-purple);
+    font-size: 1.25rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: 0.2s;
+}
+.icon-btn-small:hover { background: var(--border-color); }
+.dropdown-menu-small { /* Adjust dropdown for AI title menu */
+    min-width: unset;
+    width: 180px; /* Specific width */
+    left: unset;
+    right: 0;
+    transform: translateX(0); /* No horizontal transform */
+}
+
+
+.editor-toolbar { 
+    display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; 
+    padding: 0.75rem; background: rgba(255,255,255,0.05); 
+    border-bottom: 1px solid var(--border-color); 
+    gap: 0.25rem; 
+}
+.tool-btn { padding: 0.5rem; color: var(--text-muted); font-size: 1.25rem; display: flex; }
+.tool-btn:hover { color: var(--text-main); }
+.ai-btn { color: var(--accent-purple); font-size: 0.75rem; font-weight: 700; gap: 4px; align-items: center; }
+.delete-btn { color: #fca5a5; }
+
+.editor-content-area { flex: 1; display: flex; flex-direction: column; overflow-y: auto; position: relative; }
+.main-input, .main-preview { 
+    flex: 1; width: 100%; padding: 2rem; 
+    font-size: var(--fs); line-height: 1.8; 
+    border: none; outline: none; resize: none; 
+    background: transparent; color: inherit; 
+    font-family: var(--ff); 
+    box-sizing: border-box; 
+}
+.hidden { display: none !important; }
+
+/* Markdown Preview Specifics */
+.main-preview { display: block; }
+.main-preview h1 { font-size: 2em; font-weight: 800; line-height: 1.2; margin-bottom: 1rem; }
+.main-preview h2 { font-size: 1.5em; font-weight: 700; line-height: 1.3; margin-bottom: 0.8rem; }
+.main-preview strong { font-weight: 700; }
+.main-preview em { font-style: italic; }
+.main-preview blockquote { border-left: 4px solid #cbd5e1; padding-left: 1rem; color: #64748b; margin: 1rem 0; font-style: italic; }
+.main-preview code { 
+    background: rgba(0,0,0,0.05); padding: 2px 4px; border-radius: 4px; 
+    font-family: monospace; 
+}
+/* Highlight.js will style <pre><code> blocks */
+.main-preview pre { 
+    background: #282c34; /* Atom one dark default */
+    border-radius: 8px; 
+    padding: 1rem; 
+    overflow-x: auto; 
+    margin: 1rem 0; 
+}
+.main-preview ul, .main-preview ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+.main-preview li { margin-bottom: 0.5rem; }
+
+/* KaTeX specific styling */
+.main-preview .katex-display {
+    margin-top: 1em;
+    margin-bottom: 1em;
+    text-align: center;
+}
+.main-preview .katex {
+    font-size: 1.1em; /* Adjust inline math size */
+}
+/* Image attachment styling */
+.main-preview img {
+    max-width: 100%;
+    height: auto;
+    display: block; /* Center block images */
+    margin: 1rem auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+
+/* --- SETTINGS UI NEW --- */
+.settings-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    padding: 0;
+}
+
+.settings-header-new {
+    padding: 2rem 1.5rem 1rem; 
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color); 
+    background: var(--bg-app);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.settings-header-new h2 { margin: 0; font-size: 1.875rem; font-weight: 800; }
+.close-settings-btn { 
+    width: 2.5rem; height: 2.5rem; 
+    background: var(--input-bg); 
+    border-radius: 50%; 
+    display: flex; align-items: center; justify-content: center; 
+    font-size: 1.5rem; color: var(--text-main); 
+}
+
+.settings-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem; 
+}
+
+.setting-card {
+    background: var(--input-bg); 
+    border-radius: 1.5rem; 
+    padding: 1.5rem;
+    margin-bottom: 1.5rem; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    border: 1px solid var(--border-color);
+}
+.setting-card h3 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: var(--text-main);
+}
+
+.setting-item-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem; 
+}
+
+.setting-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.setting-label-text { 
+    font-size: 10px; 
+    font-weight: 900; 
+    color: var(--text-muted); 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+}
+
+/* Small adjustments for inputs/buttons within the new settings UI */
+.input-row-mini { display: flex; gap: 0.5rem; }
+.input-styled-mini { 
+    flex: 1;
+    background: var(--bg-app); 
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem; 
+    padding: 0.75rem; 
+    font-size: 0.75rem; 
+    color: var(--text-main); outline: none; 
+}
+.btn-dark-mini { 
+    background: var(--primary); 
+    color: var(--primary-text); 
+    padding: 0.75rem 1rem; 
+    border-radius: 0.75rem; 
+    font-size: 0.75rem; 
+    font-weight: 700; 
+    white-space: nowrap; 
+}
+
+.input-stack-tight { display: flex; flex-direction: column; gap: 0.5rem; }
+.input-styled-small { 
+    width: 100%; background: var(--bg-app); 
+    border: 1px solid var(--border-color); border-radius: 0.75rem; 
+    padding: 0.75rem; font-size: 0.75rem; 
+    color: var(--text-main); outline: none; 
+    box-sizing: border-box; 
+}
+.area-xxs { height: 3.5rem; resize: none; }
+.full-btn-primary-small { 
+    width: 100%; padding: 0.75rem; 
+    background: var(--accent-purple); 
+    color: white; 
+    font-weight: 700; 
+    border-radius: 0.75rem; 
+    font-size: 0.75rem; 
+}
+
+.full-btn-danger { 
+    width: 100%; padding: 1.25rem; 
+    background: #fef2f2; 
+    color: #ef4444; 
+    font-weight: 900; 
+    border-radius: 1rem; 
+    font-size: 10px; 
+    text-transform: uppercase; 
+    letter-spacing: 2px; 
+}
+
+.credits-content {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--text-main);
+}
+.credits-content a {
+    color: var(--accent-blue);
+    text-decoration: none;
+}
+.credits-content a:hover {
+    text-decoration: underline;
+}
+
+/* Generic UI Elements (re-used from previous versions) */
+.full-btn-dark { 
+    width: 100%; padding: 1rem; 
+    background: var(--primary); 
+    color: var(--primary-text); 
+    font-weight: 700; 
+    border-radius: 1rem; 
+    font-size: 0.875rem; 
+}
+.tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 0.5rem; }
+.list-stack { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
+.list-item { 
+    display: flex; justify-content: space-between; padding: 0.75rem; 
+    background: var(--bg-app); border: 1px solid var(--border-color); 
+    border-radius: 0.75rem; font-size: 0.75rem; font-weight: 700; 
+}
+.range-slider { width: 100%; height: 6px; background: var(--border-color); border-radius: 4px; -webkit-appearance: none; }
+.range-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: var(--primary); border-radius: 50%; cursor: pointer; }
+
+/* --- MODALS --- */
+.modal-backdrop { 
+    background: rgba(15, 23, 42, 0.5); 
+    backdrop-filter: blur(8px); 
+    display: none; 
+    position: fixed; inset: 0; 
+    z-index: 2000; 
+    align-items: center; justify-content: center; 
+    padding: 2rem; 
+}
+.modal-card { /* Original large modal for cheat sheet */
+    background: var(--bg-app); 
+    width: 100%; max-width: 320px; 
+    border-radius: 2.5rem; 
+    padding: 2rem; 
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); 
+    animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); 
+}
+.modal-card-small { /* Redesigned smaller modals for tags/stats */
+    background: var(--bg-app); 
+    width: 100%; max-width: 280px; /* Slightly smaller */
+    border-radius: 1.5rem; /* More subtle curve */
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15); 
+    animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); 
+    display: flex;
+    flex-direction: column;
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+.modal-header h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+}
+.modal-close-btn {
+    width: 2rem; height: 2rem;
+    background: var(--input-bg);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.25rem; color: var(--text-main);
+    transition: background 0.2s;
+}
+.modal-close-btn:hover { background: var(--border-color); }
+
+.modal-body {
+    padding: 1.5rem;
+}
+.input-styled-full { /* For tag input in modal */
+    width: 100%; background: var(--input-bg); 
+    border: 1px solid var(--border-color); border-radius: 0.75rem; 
+    padding: 0.75rem; font-size: 0.875rem; 
+    color: var(--text-main); outline: none; 
+    box-sizing: border-box; 
+}
+
+
+@keyframes modalIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+.ad-placeholder { 
+    display: flex; align-items: center; justify-content: center; 
+    background: var(--input-bg); color: var(--text-muted); 
+    font-weight: 800; font-size: 10px; letter-spacing: 2px; 
+    text-transform: uppercase; 
+    border: 2px dashed var(--border-color); 
+    border-radius: 1rem; 
+}
+.ad-slot-editor { width: 320px; height: 50px; margin: 10px auto; }
+.ad-slot-settings { width: 300px; height: 250px; margin: 20px auto; }
+.ad-slot-dashboard { width: 100%; height: 100px; margin-top: 20px; }
+
+/* Dropdowns */
+.dropdown-wrapper { position: relative; display: inline-block; }
+.dropdown-menu { 
+    position: absolute; top: calc(100% + 10px); left: 50%; transform: translateX(-50%); 
+    z-index: 1000; background: var(--bg-app); border: 1px solid var(--border-color); 
+    border-radius: 1.25rem; display: none; 
+    box-shadow: 0 15px 40px rgba(0,0,0,0.12); 
+    padding: 8px; min-width: 160px; 
+}
+.dropdown-active { display: block !important; animation: menuIn 0.2s ease-out; }
+.dropdown-menu button { 
+    width: 100%; text-align: left; padding: 0.75rem; 
+    font-size: 10px; font-weight: 900; text-transform: uppercase; 
+    color: var(--text-main); border-radius: 0.75rem; 
+}
+.dropdown-menu button:hover { background: var(--input-bg); }
+@keyframes menuIn { from { opacity:0; transform:translate(-50%, 8px); } to { opacity:1; transform:translate(-50%, 0); } }
+
+/* Color Swatches */
+.menu-row { min-width: 0; width: auto; }
+.color-swatch-row { display: flex; gap: 0.5rem; padding: 4px; }
+.color-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid var(--border-color); }
+.c-white { background: #ffffff; }
+.c-blue { background: #f0f9ff; }
+.c-red { background: #fef2f2; }
+.c-green { background: #f0fdf4; }
+.c-yellow { background: #fffbeb; }
+
+/* Editor Footer */
+.editor-footer { 
+    padding: 0.75rem 2rem; 
+    background: var(--bg-app); 
+    border-top: 1px solid var(--border-color); 
+    display: flex; justify-content: space-between; align-items: center; 
+}
+.footer-btn-stats { /* Make the char count clickable and styled as a button */
+    font-size: 9px; 
+    font-weight: 900; 
+    color: var(--text-muted); 
+    text-transform: uppercase; 
+    letter-spacing: 1px; 
+    padding: 0.5rem 0.75rem; /* Add padding for clickable area */
+    border-radius: 0.5rem;
+    transition: background 0.2s;
+}
+.footer-btn-stats:hover {
+    background: var(--input-bg);
+}
+
+.save-status { 
+    display: flex; align-items: center; 
+    font-size: 9px; font-weight: 900; 
+    text-transform: uppercase; color: #10b981; 
+    letter-spacing: 1px; 
+}
+.sync-pulse { width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block; margin-right: 6px; }
+.progress-bar { height: 3px; background: #a855f7; width: 0%; transition: width 0.3s; }
+
+/* RTL */
+.rtl-mode { direction: rtl; text-align: right; font-family: var(--urdu-font) !important; }
+img.emoji { height: 1.2em; width: 1.2em; margin: 0 .05em 0 .1em; vertical-align: -0.1em; display: inline; }
+
+/* Detailed Stats List */
+.stats-list-detailed {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.stat-row .setting-label-text { /* Re-using this class for consistency */
+    font-size: 10px;
+}
+.stat-row strong {
+    font-size: 1rem;
+    font-weight: 900;
+    color: var(--text-main);
+}
+
+
+/* ==================================== */
+/* AI LOADER (Uiverse.io) */
+/* ==================================== */
+.ai-loader-container {
+    position: absolute; inset: 0;
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(4px);
+    z-index: 200; display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+    text-align: center;
+}
+.loader {
+  --color-one: #4facfe;
+  --color-two: #00f2fe;
+  --color-three: #4facfe66;
+  --color-four: #00f2fe66;
+  --color-five: #ffbf4740;
+  --time-animation: 2s;
+  --size: 1; /* You can change the size */
+  position: relative;
+  border-radius: 50%;
+  transform: scale(var(--size));
+  box-shadow:
+    0 0 25px 0 var(--color-three),
+    0 20px 50px 0 var(--color-four);
+  animation: colorize calc(var(--time-animation) * 3) ease-in-out infinite;
+}
+
+.loader::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border-top: solid 1px var(--color-one);
+  border-bottom: solid 1px var(--color-two);
+  background: linear-gradient(180deg, var(--color-five), var(--color-four));
+  box-shadow:
+    inset 0 10px 10px 0 var(--color-three),
+    inset 0 -10px 10px 0 var(--color-four);
+}
+
+.loader .box {
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(
+    180deg,
+    var(--color-one) 30%,
+    var(--color-two) 70%
+  );
+  mask: url(#clipping);
+  -webkit-mask: url(#clipping);
+}
+
+.loader svg {
+  position: absolute;
+}
+
+.loader svg #clipping {
+  filter: contrast(15);
+  animation: roundness calc(var(--time-animation) / 2) linear infinite;
+}
+
+.loader svg #clipping polygon {
+  filter: blur(7px);
+}
+
+.loader svg #clipping polygon:nth-child(1) {
+  transform-origin: 75% 25%;
+  transform: rotate(90deg);
+}
+
+.loader svg #clipping polygon:nth-child(2) {
+  transform-origin: 50% 50%;
+  animation: rotation var(--time-animation) linear infinite reverse;
+}
+
+.loader svg #clipping polygon:nth-child(3) {
+  transform-origin: 50% 60%;
+  animation: rotation var(--time-animation) linear infinite;
+  animation-delay: calc(var(--time-animation) / -3);
+}
+
+.loader svg #clipping polygon:nth-child(4) {
+  transform-origin: 40% 40%;
+  animation: rotation var(--time-animation) linear infinite reverse;
+}
+
+.loader svg #clipping polygon:nth-child(5) {
+  transform-origin: 40% 40%;
+  animation: rotation var(--time-animation) linear infinite reverse;
+  animation-delay: calc(var(--time-animation) / -2);
+}
+
+.loader svg #clipping polygon:nth-child(6) {
+  transform-origin: 60% 40%;
+  animation: rotation var(--time-animation) linear infinite;
+}
+
+.loader svg #clipping polygon:nth-child(7) {
+  transform-origin: 60% 40%;
+  animation: rotation var(--time-animation) linear infinite;
+  animation-delay: calc(var(--time-animation) / -1.5);
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes roundness {
+  0% {
+    filter: contrast(15);
+  }
+  20% {
+    filter: contrast(3);
+  }
+  40% {
+    filter: contrast(3);
+  }
+  60% {
+    filter: contrast(15);
+  }
+  100% {
+    filter: contrast(15);
+  }
+}
+
+@keyframes colorize {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  20% {
+    filter: hue-rotate(-30deg);
+  }
+  40% {
+    filter: hue-rotate(-60deg);
+  }
+  60% {
+    filter: hue-rotate(-90deg);
+  }
+  80% {
+    filter: hue-rotate(-45deg);
+  }
+  100% {
+    filter: hue-rotate(0deg);
+  }
+}
+
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- ================= DASHBOARD VIEW ================= -->
+        <section id="view-dash" class="view view-active">
+            <header class="app-header">
+                <div class="header-branding">
+                    <h1>ZenNote</h1>
+                    <p class="subtitle">Your Thoughts, Organized.</p>
+                </div>
+                <div class="header-actions">
+                    <!-- Layout Menu -->
+                    <div class="dropdown-wrapper">
+                        <button class="icon-btn" onclick="App.toggleDropdown('layout-menu', event)">
+                            <i class='bx bx-layout'></i>
+                        </button>
+                        <div id="layout-menu" class="dropdown-menu">
+                            <button onclick="App.setLayout('grid')"><i class='bx bxs-grid-alt'></i> Grid</button>
+                            <button onclick="App.setLayout('list')"><i class='bx bx-list-ul'></i> List</button>
+                        </div>
+                    </div>
+                    <button class="icon-btn" onclick="App.openView('view-settings')">
+                        <i class='bx bx-cog'></i>
+                    </button>
+                </div>
+            </header>
+
+            <div class="search-container">
+                <div class="search-bar">
+                    <i class='bx bx-search'></i>
+                    <input type="text" id="searchBox" placeholder="Search notes or tags..." oninput="App.doSearch(this.value)">
+                </div>
+                <div id="active-tag-filter" class="tag-filter-area">
+                    
+                </div>
+            </div>
+
+            <div class="content-scroll">
+                <div id="notes-grid" class="notes-grid">
+                    <!-- Empty State SVG for Notes Grid -->
+                     
+                </div>
+                <div class="ad-placeholder ad-slot-dashboard"></div>
+            </div>
+
+            <button class="fab-btn" onclick="App.createNote()">
+                <i class='bx bx-plus'></i>
+            </button>
+        </section>
+
+        <!-- ================= EDITOR VIEW ================= -->
+        <section id="view-editor" class="view">
+            <!-- AI Loader from Uiverse.io -->
+            <div id="ai-loader" class="ai-loader-container">
+                <div class="loader">
+                    <svg width="100" height="100" viewBox="0 0 100 100">
+                        <defs>
+                        <mask id="clipping">
+                            <polygon points="0,0 100,0 100,100 0,100" fill="black"></polygon>
+                            <polygon points="25,25 75,25 50,75" fill="white"></polygon>
+                            <polygon points="50,25 75,75 25,75" fill="white"></polygon>
+                            <polygon points="35,35 65,35 50,65" fill="white"></polygon>
+                            <polygon points="35,35 65,35 50,65" fill="white"></polygon>
+                            <polygon points="35,35 65,35 50,65" fill="white"></polygon>
+                            <polygon points="35,35 65,35 50,65" fill="white"></polygon>
+                        </mask>
+                        </defs>
+                    </svg>
+                    <div class="box"></div>
+                </div>
+            </div>
+
+            <header class="editor-header">
+                <button class="back-btn" onclick="App.closeEditor()">
+                    <i class='bx bx-chevron-left'></i>
+                </button>
+                <div class="editor-actions">
+                    <button id="rtlBtn" class="pill-btn" onclick="App.toggleRTL()">RTL</button>
+                    <button id="modeBtn" class="pill-btn-primary" onclick="App.toggleMode()">Preview</button>
+                    <button class="action-btn" onclick="App.closeEditor()">Done</button>
+                </div>
+            </header>
+
+            <div class="editor-body">
+                <!-- Title Input -->
+                <div class="editor-title-wrapper">
+                    <input type="text" id="noteTitleInput" class="note-title-input" placeholder="Untitled Note">
+                    <div class="dropdown-wrapper">
+                        <button class="icon-btn-small" onclick="App.toggleDropdown('ai-title-menu', event)" title="AI Generate Title">
+                            <i class='bx bxs-magic-wand'></i>
+                        </button>
+                        <div id="ai-title-menu" class="dropdown-menu dropdown-menu-small">
+                            <button onclick="App.generateTitleFromAI('Generate a concise, catchy title')">Generate Catchy Title</button>
+                            <button onclick="App.generateTitleFromAI('Summarize the main idea into a title')">Summarize to Title</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TOOLBAR -->
+                <div id="editor-toolbar" class="editor-toolbar">
+                    <div class="dropdown-wrapper">
+                        <button class="tool-btn" onclick="App.toggleDropdown('format-menu', event)"><i class='bx bx-font-size'></i></button>
+                        <div id="format-menu" class="dropdown-menu">
+                            <button onclick="App.format('h1')">Heading 1</button>
+                            <button onclick="App.format('h2')">Heading 2</button>
+                            <button onclick="App.format('bold')">Bold</button>
+                            <button onclick="App.format('italic')">Italic</button>
+                            <button onclick="App.format('quote')">Quote</button>
+                            <button onclick="App.format('code')">Inline Code</button>
+                            <button onclick="App.format('codeblock')">Code Block</button>
+                            <button onclick="App.format('ul')">Unordered List</button>
+                            <button onclick="App.format('ol')">Ordered List</button>
+                        </div>
+                    </div>
+                    
+                    <div class="dropdown-wrapper">
+                        <button class="tool-btn ai-btn" onclick="App.toggleDropdown('ai-menu', event)"><i class='bx bxs-magic-wand'></i> AI</button>
+                        <div id="ai-menu" class="dropdown-menu">
+                            <button onclick="App.runAI('Deeply improve and expand this content')">Improve Content</button>
+                            <button onclick="App.runAI('Summarize this into concise bullets')">Summarize</button>
+                            <button onclick="App.runAI('Translate this to Spanish')">Translate to Spanish</button>
+                            <button onclick="App.runAI('Generate a poem about the topic')">Generate Poem</button>
+                            <button onclick="App.runAI('Explain this concept simply')">Explain Simply</button>
+                            <button onclick="App.runAI('Rephrase this for clarity')">Rephrase</button>
+                            <button onclick="App.runAI('Find keywords from this content')">Keywords</button>
+                            <button onclick="App.runAI('Write a catchy headline for this')">Catchy Headline</button>
+                            <div id="custom-ai-cmds-list"></div>
+                        </div>
+                    </div>
+
+                    <div class="dropdown-wrapper">
+                        <button class="tool-btn" onclick="App.toggleDropdown('color-menu', event)"><i class='bx bx-palette'></i></button>
+                        <div id="color-menu" class="dropdown-menu menu-row">
+                            <div class="color-swatch-row">
+                                <div onclick="App.applyColor('white')" class="color-dot c-white"></div>
+                                <div onclick="App.applyColor('blue')" class="color-dot c-blue"></div>
+                                <div onclick="App.applyColor('red')" class="color-dot c-red"></div>
+                                <div onclick="App.applyColor('green')" class="color-dot c-green"></div>
+                                <div onclick="App.applyColor('yellow')" class="color-dot c-yellow"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="tool-btn" onclick="App.openTagModal()"><i class='bx bx-tag'></i></button>
+                    <button class="tool-btn" onclick="document.getElementById('imageUploadInput').click();"><i class='bx bx-image-add'></i></button>
+                    <input type="file" id="imageUploadInput" accept="image/*" class="hidden" onchange="App.handleImageUpload(event)">
+                    
+                    <div class="dropdown-wrapper">
+                        <button class="tool-btn" onclick="App.toggleDropdown('copy-menu', event)"><i class='bx bx-copy'></i></button>
+                        <div id="copy-menu" class="dropdown-menu">
+                            <button onclick="App.copyMarkdownToClipboard()">Copy Markdown</button>
+                            <button onclick="App.copyPlainTextToClipboard()">Copy Plain Text</button>
+                        </div>
+                    </div>
+
+                    <button class="tool-btn" onclick="App.shareNote()"><i class='bx bx-share-alt'></i></button>
+                    <button class="tool-btn delete-btn" onclick="App.deleteNote()"><i class='bx bx-trash'></i></button>
+                </div>
+
+                <div class="editor-content-area">
+                    <textarea id="mainTxt" class="main-input" placeholder="Start typing..."></textarea>
+                    <div id="mainPrv" class="main-preview hidden"></div>
+                </div>
+                
+                <div class="ad-placeholder ad-slot-editor"></div>
+                <div id="writing-progress" class="progress-bar"></div>
+
+                <div id="editor-footer" class="editor-footer">
+                    <button id="charCount" class="footer-btn-stats" onclick="App.openStats()">0 Characters</button>
+                    <div id="save-status" class="save-status"><span class="sync-pulse"></span> Saved</div>
+                    <select id="fontSelect" onchange="App.changeFont(this.value)" class="font-select"></select>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= SETTINGS VIEW ================= -->
+        <section id="view-settings" class="view">
+            <div class="settings-content-wrapper">
+                <header class="settings-header-new">
+                    <h2>Settings</h2>
+                    <button class="close-settings-btn" onclick="App.openView('view-dash')">×</button>
+                </header>
+
+                <div class="settings-scroll-area">
+                    <div class="setting-card">
+                        <h3>Editor & Interface</h3>
+                        <div class="setting-item-grid">
+                            <div class="setting-item">
+                                <label class="setting-label-text">Text Size</label>
+                                <input type="range" min="14" max="28" value="16" oninput="App.updateFontSize(this.value)" class="range-slider">
+                            </div>
+                            <div class="setting-item">
+                                <label class="setting-label-text">Import Fonts (Editor Only)</label>
+                                <div class="input-row-mini">
+                                    <input type="text" id="fontUrlInput" placeholder="Google Font URL..." class="input-styled-mini">
+                                    <button onclick="App.importFont()" class="btn-dark-mini">Import</button>
+                                </div>
+                                <div id="fontList" class="tags-container">
+                                    <!-- Empty State SVG for Font List -->
+                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-type"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg> 
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <button onclick="App.openCheatSheet()" class="full-btn-secondary">Markdown Cheat Sheet</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setting-card">
+                        <h3>AI Commands</h3>
+                        <div class="setting-item-grid">
+                            <div class="setting-item">
+                                <label class="setting-label-text">Custom AI Prompts</label>
+                                <div class="input-stack-tight">
+                                    <input type="text" id="aiCmdName" placeholder="Command Name (e.g. Translate)" class="input-styled-small">
+                                    <textarea id="aiCmdPrompt" placeholder="Instruction for AI..." class="input-styled-small area-xxs"></textarea>
+                                    <button onclick="App.saveAICommand()" class="full-btn-primary-small">Add AI Shortcut</button>
+                                </div>
+                            </div>
+                            <div id="ai-custom-list" class="list-stack-small"></div>
+                        </div>
+                    </div>
+
+                    <div class="setting-card">
+                        <h3>Data Management</h3>
+                        <div class="setting-item-grid">
+                            <div class="setting-item">
+                                <button onclick="App.nuclearReset()" class="full-btn-danger">Nuclear Reset</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setting-card">
+                        <h3>Credits</h3>
+                        <div class="credits-content">
+                            <p>AI Loader: <a href="https://uiverse.io/andrew-manzyk/spicy-narwhal-64" target="_blank">andrew-manzyk @ Uiverse.io</a></p>
+                            <p>Markdown Parser: <a href="https://marked.js.org/" target="_blank">Marked.js</a></p>
+                            <p>Syntax Highlighting: <a href="https://highlightjs.org/" target="_blank">Highlight.js</a></p>
+                            <p>Math Rendering: <a href="https://katex.org/" target="_blank">KaTeX</a></p>
+                            <p>Emojis: <a href="https://twemoji.twitter.com/" target="_blank">Twemoji</a></p>
+                            <p>Icons: <a href="https://boxicons.com/" target="_blank">Boxicons</a></p>
+                            <p>Fonts: <a href="https://fonts.google.com/" target="_blank">Google Fonts</a></p>
+                            <p>All other code and design by Muhammad Awais & Sawera Ehsar.</p>
+                        </div>
+                    </div>
+
+                    <div class="ad-placeholder ad-slot-settings"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= MODALS ================= -->
+        <!-- Redesigned Tag Modal -->
+        <div id="tagModal" class="modal-backdrop" onclick="App.closeTagModal()">
+            <div class="modal-card-small" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <h3>Edit Tags</h3>
+                    <button class="modal-close-btn" onclick="App.closeTagModal()">×</button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="tagInput" placeholder="Separated by commas..." class="input-styled-full">
+                    <button onclick="App.saveTags()" class="full-btn-dark mt-3">Update Tags</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Redesigned Stats Modal -->
+        <div id="statsModal" class="modal-backdrop" onclick="App.closeStats()">
+            <div class="modal-card-small" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <h3>Note Stats</h3>
+                    <button class="modal-close-btn" onclick="App.closeStats()">×</button>
+                </div>
+                <div class="modal-body">
+                    <div id="statsBody" class="stats-list-detailed"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Markdown Cheat Sheet Modal (Existing, now with KaTeX examples) -->
+        <div id="cheatSheetModal" class="modal-backdrop" onclick="this.style.display='none'">
+            <div class="modal-card" onclick="event.stopPropagation()">
+                <h3>Markdown Guide</h3>
+                <div class="md-guide">
+                    <p># Heading 1<br>## Heading 2</p>
+                    <p>**Bold**, *Italic*, `Inline Code`</p>
+                    <p>> Blockquote</p>
+                    <p>- List Item<br>1. Ordered Item</p>
+                    <p>```<br>Code Block<br>```</p>
+                    <p>Inline math: `$E=mc^2$`</p>
+                    <p>Block math: `$$x^2 + y^2 = z^2$$`</p>
+                </div>
+                <button onclick="document.getElementById('cheatSheetModal').style.display='none'" class="full-btn-dark">Got it</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const App = (() => {
+    const STORAGE_KEY = 'zn_v20_final_core'; // Updated storage key
+    let saveTimer = null;
+
+    // Default State for V20 Final
+    let state = {
+        notes: [],
+        cfg: { 
+            fontSize: 16, 
+            layout: 'grid', 
+            aiCommands: []
+        },
+        fonts: [], // User-imported fonts
+        currentId: null,
+        isEditMode: false,
+        activeFilterTag: null
+    };
+
+    // Color Logic Map (Maps internal name to CSS Variable)
+    const colorMap = {
+        'white':  'var(--note-white)',
+        'blue':   'var(--note-blue)',
+        'red':    'var(--note-red)',
+        'green':  'var(--note-green)',
+        'yellow': 'var(--note-yellow)'
+    };
+
+    // DOM Cache
+    const DOM = {
+        txt: () => document.getElementById('mainTxt'),
+        prv: () => document.getElementById('mainPrv'),
+        grid: () => document.getElementById('notes-grid'),
+        status: () => document.getElementById('save-status'),
+        tagInput: () => document.getElementById('tagInput'),
+        fontSelect: () => document.getElementById('fontSelect'), 
+        fontUrlInput: () => document.getElementById('fontUrlInput'),
+        fontList: () => document.getElementById('fontList'),
+        body: () => document.body,
+        noteTitleInput: () => document.getElementById('noteTitleInput')
+    };
+
+    const loadData = () => {
+        try {
+            state.notes = JSON.parse(localStorage.getItem(STORAGE_KEY + '_notes')) || [];
+            state.fonts = JSON.parse(localStorage.getItem(STORAGE_KEY + '_fonts')) || [];
+            const savedCfg = JSON.parse(localStorage.getItem(STORAGE_KEY + '_cfg'));
+            if (savedCfg) state.cfg = { ...state.cfg, ...savedCfg };
+        } catch (e) { console.error("Data load failed", e); state.notes = []; state.fonts = []; }
+    };
+
+    const saveState = () => {
+        localStorage.setItem(STORAGE_KEY + '_notes', JSON.stringify(state.notes));
+        localStorage.setItem(STORAGE_KEY + '_fonts', JSON.stringify(state.fonts));
+        localStorage.setItem(STORAGE_KEY + '_cfg', JSON.stringify(state.cfg));
+        if(DOM.status()) DOM.status().innerHTML = `<span class="sync-pulse"></span> Saved`;
+    };
+
+    // Helper for Optimistic UI updates (e.g., delete)
+    const optimisticUpdate = (action, payload, callback) => {
+        let originalState;
+        switch(action) {
+            case 'deleteNote':
+                originalState = [...state.notes];
+                state.notes = state.notes.filter(n => n.id !== payload.id);
+                renderDash(); // Update UI immediately
+                if (callback) callback();
+                // In a real app, you'd send to server, then handle success/fail
+                // For local storage, it's essentially instant success
+                saveState(); 
+                break;
+            case 'togglePin':
+                originalState = [...state.notes];
+                const noteToPin = state.notes.find(n => n.id === payload.id);
+                if (noteToPin) noteToPin.pinned = payload.pinned;
+                renderDash();
+                saveState();
+                break;
+            case 'saveTags':
+                 originalState = [...state.notes];
+                 const noteToTag = state.notes.find(n => n.id === payload.id);
+                 if (noteToTag) noteToTag.tags = payload.tags;
+                 renderDash();
+                 saveState();
+                 break;
+            // Add more optimistic updates here
+            default:
+                if (callback) callback(); // If no optimistic UI, just call callback
+                saveState();
+                break;
+        }
+    };
+
+    const renderDash = (query = "") => {
+        const grid = DOM.grid();
+        if (!grid) return;
+        
+        grid.parentElement.className = `content-scroll layout-${state.cfg.layout}`;
+
+        let data = state.notes.filter(n => n.body.trim() !== "");
+
+        // Sort by newest first (implicit by ID)
+        data.sort((a,b) => b.id - a.id);
+
+        // Filtering
+        if(query) {
+            const q = query.toLowerCase();
+            data = data.filter(n => (n.title && n.title.toLowerCase().includes(q)) || n.body.toLowerCase().includes(q) || (n.tags && n.tags.some(t => t.toLowerCase().includes(q))));
+        }
+        if(state.activeFilterTag) {
+            data = data.filter(n => n.tags && n.tags.includes(state.activeFilterTag));
+            document.getElementById('active-tag-filter').innerHTML = `<span class="tag-pill" style="background:var(--accent-blue); color:white" onclick="App.clearTagFilter()">Filtered: ${state.activeFilterTag} ×</span>`;
+        } else {
+            document.getElementById('active-tag-filter').innerHTML = "";
+            // Placeholder for Active Tag Filter Empty State SVG (if no tags active)
+            // if (data.length === 0 && !query) {
+            //      document.getElementById('active-tag-filter').innerHTML = `<!-- Placeholder for Active Tag Filter Empty State SVG -->`;
+            // }
+        }
+
+        if (data.length === 0) {
+            grid.innerHTML = `<div style="grid-column: span 2; text-align:center; padding: 4rem; opacity:0.3; font-weight:900; font-size:10px; letter-spacing:2px; text-transform:uppercase;">No Notes Found</div>
+                              <!-- Placeholder for Notes Grid Empty State SVG -->`;
+            return;
+        }
+
+        grid.innerHTML = data.map(n => {
+            const bgVar = colorMap[n.colorName] || 'var(--note-white)';
+            const displayTitle = n.title?.trim() || 'Untitled Note';
+            const briefBody = n.body.split('\n')[0]?.replace(/[#*`>$]/g, '').trim() || ''; // Show first line, clean markdown
+            const lastEdited = n.time ? new Date(n.time).toLocaleString() : 'Never';
+            
+            return `
+            <div onclick="App.openNote(${n.id})" class="note-card" style="background:${bgVar}">
+                <div class="${n.rtl ? 'rtl-mode' : ''}">
+                    <h3 class="note-card-title">${displayTitle}</h3>
+                    ${briefBody ? `<p class="note-card-body-preview">${briefBody}</p>` : ''}
+                    <div style="display:flex; flex-wrap:wrap; margin-top:0.5rem;">
+                        ${(n.tags || []).map(t => `<span class="tag-pill" onclick="event.stopPropagation(); App.setTagFilter('${t}')">${t}</span>`).join('')}
+                    </div>
+                </div>
+                <span class="note-date">Last edited: ${lastEdited}</span>
+            </div>`;
+        }).join('');
+        
+        if(typeof twemoji !== 'undefined') twemoji.parse(grid);
+    };
+
+    // Skeleton loading toggle
+    const toggleSkeleton = (show) => {
+        const grid = DOM.grid();
+        if (!grid) return;
+
+        if (show) {
+            grid.innerHTML = Array(6).fill(0).map(() => `
+                <div class="note-card skeleton-loading" style="min-height:12rem; border:1px solid var(--border-color); border-radius:2.5rem;">
+                    <div style="height:1.5rem; width:80%; background:rgba(0,0,0,0.1); border-radius:0.5rem; margin-bottom:0.75rem;"></div>
+                    <div style="height:0.75rem; width:90%; background:rgba(0,0,0,0.05); border-radius:0.25rem; margin-bottom:0.25rem;"></div>
+                    <div style="height:0.75rem; width:70%; background:rgba(0,0,0,0.05); border-radius:0.25rem; margin-bottom:0.25rem;"></div>
+                    <div style="height:0.75rem; width:50%; background:rgba(0,0,0,0.05); border-radius:0.25rem;"></div>
+                    <div style="flex-grow:1;"></div>
+                    <div style="height:0.5rem; width:40%; background:rgba(0,0,0,0.05); border-radius:0.25rem;"></div>
+                </div>
+            `).join('');
+            grid.classList.add('skeleton-loading');
+        } else {
+            grid.classList.remove('skeleton-loading');
+        }
+    };
+
+    return {
+        init() {
+            loadData();
+            this.updateFontSize(state.cfg.fontSize);
+            this.injectAllFonts(); 
+            this.updateFontUI(); 
+            
+            toggleSkeleton(true); // Show skeleton on load
+            setTimeout(() => {
+                renderDash();
+                toggleSkeleton(false); // Hide skeleton after rendering
+            }, 500); // Simulate network delay
+
+            document.addEventListener('click', () => this.closeAllDropdowns());
+            
+            if(DOM.txt()) {
+                DOM.txt().addEventListener('input', () => {
+                    this.syncStateWithUI();
+                    DOM.status().innerHTML = `<span class="sync-pulse" style="background:#f59e0b"></span> Syncing...`;
+                    clearTimeout(saveTimer);
+                    saveTimer = setTimeout(saveState, 800);
+                    this.updateWritingGoal();
+                });
+            }
+            if(DOM.noteTitleInput()) {
+                DOM.noteTitleInput().addEventListener('input', () => {
+                    const note = state.notes.find(n => n.id === state.currentId);
+                    if (note) note.title = DOM.noteTitleInput().value;
+                    clearTimeout(saveTimer);
+                    saveTimer = setTimeout(saveState, 800);
+                });
+            }
+        },
+
+        syncStateWithUI() {
+            const note = state.notes.find(n => n.id === state.currentId);
+            if(note) { 
+                note.body = DOM.txt().value; 
+                note.time = Date.now(); 
+                if (DOM.noteTitleInput().value.trim() === '') {
+                     note.title = (note.body.split('\n')[0]?.replace(/[#*`>$]/g, '').trim() || 'Untitled Note');
+                }
+            }
+            this.updateStats();
+        },
+
+        openView(id) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('view-active'));
+            document.getElementById(id).classList.add('view-active');
+            this.closeAllDropdowns();
+        },
+
+        createNote() {
+            const id = Date.now();
+            // Default title will be derived from body, or 'Untitled Note'
+            state.notes.push({ id, title: '', body: "", time: id, colorName: 'white', tags: [], rtl: false, fontFam: 'sans-serif' }); 
+            state.currentId = id;
+            this.setEditMode(true);
+            this.openView('view-editor');
+            DOM.txt().value = ""; DOM.txt().focus();
+            DOM.noteTitleInput().value = ''; // Clear title input for new note
+            document.getElementById('view-editor').style.background = 'var(--bg-app)';
+            this.applyNoteFont(state.notes.find(n => n.id === id));
+            this.updateFontUI(); 
+        },
+
+        openNote(id) {
+            state.currentId = id;
+            const n = state.notes.find(x => x.id === id);
+            if(!n) return;
+
+            DOM.txt().value = n.body;
+            DOM.noteTitleInput().value = n.title || ''; 
+            
+            const bgVar = colorMap[n.colorName] || 'var(--note-white)';
+            document.getElementById('view-editor').style.background = bgVar;
+            
+            this.applyRTL(n.rtl);
+            this.setEditMode(n.body.length === 0);
+            this.openView('view-editor');
+            this.updateStats();
+            this.updateWritingGoal();
+            this.applyNoteFont(n); 
+            this.updateFontUI(); 
+        },
+
+        setEditMode(isEdit) {
+            state.isEditMode = isEdit;
+            const toolbar = document.getElementById('editor-toolbar');
+            const btn = document.getElementById('modeBtn');
+            const txt = DOM.txt();
+            const prv = DOM.prv();
+            
+            if(isEdit) {
+                txt.classList.remove('hidden'); 
+                prv.classList.add('hidden');
+                if(toolbar) toolbar.style.display = 'flex';
+                if(btn) btn.innerText = "Preview";
+                txt.focus();
+            } else {
+                if(typeof marked !== 'undefined') {
+                    prv.innerHTML = marked.parse(txt.value);
+                    setTimeout(() => {
+                        if (typeof hljs !== 'undefined') {
+                            document.querySelectorAll('#mainPrv pre code').forEach((block) => {
+                                hljs.highlightElement(block);
+                            });
+                        }
+                        if (typeof renderMathInElement !== 'undefined') {
+                            renderMathInElement(prv, {
+                                delimiters: [
+                                    {left: '$$', right: '$$', display: true}, 
+                                    {left: '$', right: '$', display: false},  
+                                ],
+                                throwOnError : false
+                            });
+                        }
+                        if(typeof twemoji !== 'undefined') twemoji.parse(prv);
+                    }, 0); 
+                } else {
+                    prv.innerHTML = `Markdown engine not loaded. Displaying raw text: \n<pre><code>${txt.value}</code></pre>`;
+                }
+                
+                if(typeof twemoji !== 'undefined') twemoji.parse(prv);
+                
+                txt.classList.add('hidden'); 
+                prv.classList.remove('hidden');
+                if(toolbar) toolbar.style.display = 'none';
+                if(btn) btn.innerText = "Edit";
+            }
+        },
+
+        toggleMode() { this.setEditMode(!state.isEditMode); },
+
+        closeEditor() {
+            this.syncStateWithUI();
+            const idx = state.notes.findIndex(n => n.id === state.currentId);
+            if(idx !== -1 && state.notes[idx].body.trim() === "" && state.notes[idx].title.trim() === "") {
+                optimisticUpdate('deleteNote', { id: state.currentId });
+            } else {
+                saveState(); // Save current state
+            }
+            renderDash(); 
+            this.openView('view-dash');
+            document.getElementById('view-editor').style.background = ''; // Reset
+            document.documentElement.style.setProperty('--ff', 'var(--app-font)');
+        },
+
+        toggleDropdown(id, e) {
+            e.stopPropagation();
+            const el = document.getElementById(id);
+            if(!el) return;
+            const active = el.classList.contains('dropdown-active');
+            this.closeAllDropdowns();
+            if(!active) el.classList.add('dropdown-active');
+        },
+        closeAllDropdowns() { document.querySelectorAll('.dropdown-menu').forEach(d => d.classList.remove('dropdown-active')); },
+
+        setLayout(l) { state.cfg.layout = l; renderDash(); saveState(); },
+
+        format(type) {
+            const el = DOM.txt();
+            const s = el.selectionStart, e = el.selectionEnd, val = el.value, sel = val.substring(s, e);
+            let newText = sel;
+            switch(type) {
+                case 'h1': newText = `\n# ${sel}`; break;
+                case 'h2': newText = `\n## ${sel}`; break;
+                case 'bold': newText = `**${sel}**`; break;
+                case 'italic': newText = `*${sel}*`; break;
+                case 'quote': newText = `\n> ${sel}`; break;
+                case 'code': newText = `\`${sel}\``; break;
+                case 'codeblock': newText = `\`\`\`\n${sel}\n\`\`\``; break;
+                case 'ul': newText = sel.split('\n').map(line => `- ${line}`).join('\n'); break;
+                case 'ol': newText = sel.split('\n').map((line, i) => `${i + 1}. ${line}`).join('\n'); break;
+                default: break;
+            }
+            el.value = val.substring(0, s) + newText + val.substring(e);
+            this.syncStateWithUI(); this.closeAllDropdowns();
+        },
+
+        applyColor(colorName) {
+            const note = state.notes.find(n => n.id === state.currentId);
+            if(note) { 
+                note.colorName = colorName; 
+                document.getElementById('view-editor').style.background = colorMap[colorName] || 'var(--note-white)';
+                saveState(); 
+            }
+        },
+
+        runAI(instr) {
+            const loader = document.getElementById('ai-loader');
+            loader.style.display = 'flex';
+            const context = DOM.txt().value;
+            try {
+                const ws = new WebSocket('wss://backend.buildpicoapps.com/ask_ai_streaming_v2');
+                ws.onopen = () => { DOM.txt().value = ""; this.setEditMode(true); ws.send(JSON.stringify({ appId: "country-box", prompt: `${instr} based on this: ${context}` })); };
+                ws.onmessage = (e) => { loader.style.display = 'none'; DOM.txt().value += e.data; this.syncStateWithUI(); };
+                ws.onerror = () => { loader.style.display = 'none'; alert("AI Error"); };
+                ws.onclose = () => { saveState(); };
+            } catch (err) { loader.style.display = 'none'; console.error(err); }
+        },
+
+        generateTitleFromAI(instr) {
+             const loader = document.getElementById('ai-loader');
+             loader.style.display = 'flex';
+             const context = DOM.txt().value;
+             try {
+                 const ws = new WebSocket('wss://backend.buildpicoapps.com/ask_ai_streaming_v2');
+                 ws.onopen = () => { ws.send(JSON.stringify({ appId: "country-box", prompt: `${instr} for this content: ${context}` })); };
+                 ws.onmessage = (e) => { 
+                     loader.style.display = 'none'; 
+                     DOM.noteTitleInput().value = e.data.trim().split('\n')[0].replace(/[#*`>$]/g, ''); // Take first line and clean
+                     const note = state.notes.find(n => n.id === state.currentId);
+                     if (note) note.title = DOM.noteTitleInput().value;
+                     saveState(); 
+                 };
+                 ws.onerror = () => { loader.style.display = 'none'; alert("AI Title Generation Error"); };
+                 ws.onclose = () => { };
+             } catch (err) { loader.style.display = 'none'; console.error(err); }
+             this.closeAllDropdowns();
+        },
+
+        saveAICommand() {
+            const name = document.getElementById('aiCmdName').value;
+            const prompt = document.getElementById('aiCmdPrompt').value;
+            if(!name || !prompt) return;
+            state.cfg.aiCommands.push({ name, prompt });
+            saveState(); this.renderCustomAICmds();
+            document.getElementById('aiCmdName').value = ""; document.getElementById('aiCmdPrompt').value = "";
+        },
+
+        renderCustomAICmds() {
+            const list = document.getElementById('ai-custom-list');
+            const menu = document.getElementById('custom-ai-cmds-list');
+            if(!list || !menu) return;
+            const cmds = state.cfg.aiCommands || [];
+            list.innerHTML = cmds.map((c, i) => `<div class="list-item"><span>${c.name}</span><i class='bx bx-trash' onclick="App.removeAICommand(${i})" style="color:#f87171; cursor:pointer;"></i></div>`).join('');
+            menu.innerHTML = cmds.map(c => `<button onclick="App.runAI('${c.prompt}')" style="color:var(--accent-purple)">${c.name}</button>`).join('');
+        },
+
+        removeAICommand(i) { state.cfg.aiCommands.splice(i, 1); saveState(); this.renderCustomAICmds(); },
+
+        toggleRTL() {
+            const note = state.notes.find(n => n.id === state.currentId);
+            if(note) { note.rtl = !note.rtl; this.applyRTL(note.rtl); saveState(); }
+        },
+
+        applyRTL(isRTL) {
+            const btn = document.getElementById('rtlBtn');
+            const txt = DOM.txt();
+            const prv = DOM.prv();
+            if(isRTL) {
+                txt.classList.add('rtl-mode'); prv.classList.add('rtl-mode');
+                btn.classList.add('pill-btn-primary');
+            } else {
+                txt.classList.remove('rtl-mode'); prv.classList.remove('rtl-mode');
+                btn.classList.remove('pill-btn-primary');
+            }
+        },
+
+        updateWritingGoal() {
+            const charCount = DOM.txt().value.length;
+            document.getElementById('writing-progress').style.width = Math.min((charCount / 500) * 100, 100) + '%';
+        },
+
+        handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > 2 * 1024 * 1024) { // 2MB limit
+                alert("Image size exceeds 2MB limit. Please choose a smaller image.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const base64Image = e.target.result;
+                const markdownImage = `\n![${file.name}](${base64Image})\n`;
+                DOM.txt().value += markdownImage;
+                this.syncStateWithUI();
+                event.target.value = ''; // Clear file input
+            };
+            reader.onerror = (error) => {
+                console.error("Error reading file:", error);
+                alert("Failed to read image file.");
+            };
+            reader.readAsDataURL(file);
+        },
+
+        copyMarkdownToClipboard() {
+            const note = state.notes.find(n => n.id === state.currentId);
+            if (!note) return;
+            navigator.clipboard.writeText(note.body)
+                .then(() => alert('Markdown copied to clipboard!'))
+                .catch(err => console.error('Failed to copy markdown: ', err));
+            this.closeAllDropdowns();
+        },
+
+        copyPlainTextToClipboard() {
+            const prv = DOM.prv();
+            if (prv.classList.contains('hidden')) { 
+                this.setEditMode(false);
+                setTimeout(() => { 
+                    navigator.clipboard.writeText(prv.innerText)
+                        .then(() => alert('Plain text copied to clipboard!'))
+                        .catch(err => console.error('Failed to copy plain text: ', err));
+                    this.setEditMode(true); 
+                }, 100);
+            } else {
+                navigator.clipboard.writeText(prv.innerText)
+                    .then(() => alert('Plain text copied to clipboard!'))
+                    .catch(err => console.error('Failed to copy plain text: ', err));
+            }
+            this.closeAllDropdowns();
+        },
+
+        shareNote() {
+            const note = state.notes.find(n => n.id === state.currentId);
+            if (!note) return;
+
+            if (navigator.share) {
+                navigator.share({
+                    title: note.title || 'ZenNote',
+                    text: note.body,
+                    url: document.location.href, 
+                })
+                .then(() => console.log('Successfully shared'))
+                .catch((error) => console.error('Error sharing', error));
+            } else {
+                alert('Web Share API is not supported in this browser. Please copy text manually.');
+            }
+            this.closeAllDropdowns();
+        },
+
+        openTagModal() {
+            const note = state.notes.find(n => n.id === state.currentId);
+            DOM.tagInput().value = (note.tags || []).join(', ');
+            document.getElementById('tagModal').style.display = 'flex';
+        },
+        closeTagModal() { document.getElementById('tagModal').style.display = 'none'; },
+        saveTags() {
+            const note = state.notes.find(n => n.id === state.currentId);
+            if(note) { 
+                const newTags = [...new Set(DOM.tagInput().value.split(',').map(t => t.trim()).filter(t => t))];
+                optimisticUpdate('saveTags', { id: note.id, tags: newTags }, () => {
+                    this.closeTagModal(); 
+                    renderDash(); 
+                });
+            }
+        },
+        setTagFilter(tag) { state.activeFilterTag = tag; renderDash(); },
+        clearTagFilter() { state.activeFilterTag = null; renderDash(); },
+        
+        openStats() {
+            const txt = DOM.txt().value;
+            const words = txt.trim() ? txt.trim().split(/\s+/).length : 0;
+            const charsNoSpaces = txt.replace(/\s/g, '').length;
+            const charsWithSpaces = txt.length;
+            const sentences = (txt.match(/[\w|)][.?!](\s|$)/g) || []).length;
+            const paragraphs = (txt.match(/\n\n/g) || []).length + 1;
+            const emojis = (txt.match(/\p{Extended_Pictographic}/gu) || []).length; // Unicode regex for emojis
+            const readTime = Math.ceil(words / 200); 
+
+            const rows = [ 
+                { l: 'Words', v: words }, 
+                { l: 'Characters (no spaces)', v: charsNoSpaces },
+                { l: 'Characters (with spaces)', v: charsWithSpaces },
+                { l: 'Sentences', v: sentences },
+                { l: 'Paragraphs', v: paragraphs },
+                { l: 'Emojis', v: emojis },
+                { l: 'Reading Time', v: `${readTime} min` } 
+            ];
+            document.getElementById('statsBody').innerHTML = rows.map(r => `
+                <div class="stat-row">
+                    <span class="setting-label-text">${r.l}</span>
+                    <strong>${r.v}</strong>
+                </div>
+            `).join('');
+            document.getElementById('statsModal').style.display = 'flex';
+        },
+        closeStats() { document.getElementById('statsModal').style.display = 'none'; },
+        deleteNote() { 
+            if(confirm("Permanently delete this note? This cannot be undone.")) { 
+                optimisticUpdate('deleteNote', { id: state.currentId }, () => {
+                    this.closeEditor(); 
+                });
+            } 
+        },
+        doSearch(v) { renderDash(v); },
+        updateFontSize(px) { 
+            state.cfg.fontSize = px; 
+            document.documentElement.style.setProperty('--fs', px + 'px'); 
+            saveState(); 
+        },
+        
+        // Font Management (Editor only)
+        injectFont(u) { 
+            if(!document.querySelector(`link[href="${u}"]`)) {
+                const l = document.createElement('link'); 
+                l.rel = 'stylesheet'; l.href = u; 
+                document.head.appendChild(l); 
+            }
+        },
+
+        injectAllFonts() {
+            state.fonts.forEach(url => this.injectFont(url));
+        },
+        
+        updateFontUI() {
+            const sel = DOM.fontSelect();
+            const list = DOM.fontList();
+            if(!sel || !list) return;
+
+            sel.innerHTML = `<option value="sans-serif">Sans</option><option value="Noto Nastaliq Urdu">Urdu</option>`;
+            list.innerHTML = `<!-- Placeholder for Font List Empty State SVG -->`;
+            
+            state.fonts.forEach(url => {
+                const fam = url.split('family=')[1]?.split('&')[0].replace(/\+/g, ' ');
+                if (fam) {
+                    sel.appendChild(new Option(fam, fam));
+                    if (!list.innerHTML.includes(`font-family:'${fam}'`)) {
+                        list.innerHTML += `<div class="tag-pill" style="font-family:'${fam}'">${fam} <i class='bx bx-x' onclick="App.removeFont('${url}')"></i></div>`;
+                    }
+                }
+            });
+
+            const currentNote = state.notes.find(n => n.id === state.currentId);
+            if (currentNote && currentNote.fontFam) {
+                sel.value = currentNote.fontFam;
+            } else {
+                sel.value = 'sans-serif'; 
+            }
+        },
+
+        importFont() { 
+            const url = DOM.fontUrlInput().value.trim();
+            if(!url.includes('fonts.googleapis.com/css2?family=')) {
+                alert("Please enter a valid Google Font URL (must contain 'fonts.googleapis.com/css2?family=')");
+                return;
+            }
+            if(!state.fonts.includes(url)) { 
+                state.fonts.push(url); 
+                this.injectFont(url); 
+                this.updateFontUI(); 
+                saveState();
+            } else {
+                alert("Font already imported.");
+            }
+            DOM.fontUrlInput().value = "";
+        },
+        
+        removeFont(u) { 
+            state.fonts = state.fonts.filter(x => x !== u); 
+            saveState(); 
+            const link = document.querySelector(`link[href="${u}"]`);
+            if (link) link.remove();
+            this.updateFontUI(); 
+            
+            const currentNote = state.notes.find(n => n.id === state.currentId);
+            const removedFontFamily = u.split('family=')[1]?.split('&')[0].replace(/\+/g, ' ');
+            if (currentNote && currentNote.fontFam === removedFontFamily) {
+                currentNote.fontFam = 'sans-serif';
+                this.applyNoteFont(currentNote);
+            }
+        },
+
+        changeFont(f) { 
+            const currentNote = state.notes.find(n => n.id === state.currentId);
+            if (currentNote) {
+                currentNote.fontFam = f; 
+                this.applyNoteFont(currentNote);
+                saveState(); 
+            }
+        },
+
+        applyNoteFont(note) {
+            if (note && note.fontFam) {
+                document.documentElement.style.setProperty('--ff', note.fontFam); 
+            } else {
+                document.documentElement.style.setProperty('--ff', 'var(--app-font)'); 
+            }
+            if (!state.isEditMode) {
+                this.setEditMode(false); 
+            }
+        },
+
+        updateStats() { 
+            if(document.getElementById('charCount')) document.getElementById('charCount').innerText = `${DOM.txt().value.length} Characters`; 
+        },
+        nuclearReset() { if(confirm("Wipe all data? This cannot be undone.")) { localStorage.clear(); location.reload(); } },
+        openCheatSheet() { document.getElementById('cheatSheetModal').style.display = 'flex'; }
+    };
+})();
+
+window.onload = () => App.init();
+
+    </script>
+</body>
+</html>
