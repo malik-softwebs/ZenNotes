@@ -8,13 +8,13 @@ ZenNote is a high-performance Markdown note-taking suite designed for power user
 ## 📸 Interface Preview
 | **Main Dashboard** | **Rich Preview Mode** | **Editor & LaTeX** |
 |---|---|---|
-| ![Home](./screenshots/Screenshot_2026-03-12-06-43-33-575_zennote.apposf.jpg) | ![Preview](./screenshots/1000161674.jpg) | ![Editor](./screenshots/1000161675.jpg) |
+| ![Home](./screenshots/Screenshot_2026-03-12-06-43-33-575_zennote.apposf.jpg)![Home](./screenshots/![Home](./screenshots/Screenshot_2026-03-12-06-43-33-575_zennote.apposf.jpg))![Home](./screenshots/Screenshot_2026-03-12-06-41-20-814_zennote.apposf.jpg) | ![Preview](./screenshots/Screenshot_2026-03-12-06-41-23-042_zennote.apposf.jpg) | ![Editor](./screenshots/Screenshot_2026-03-12-06-43-25-259_zennote.apposf.jpg) |
 
 ---
 
 ## 🚀 Deep-Dive Features
 
-### 🤖 Codelike standard editors, ZenNote gives you a **Custom AI Command Engine**. 
+### 🤖 screenshots standard editors, ZenNote gives you a **Custom AI Command Engine**. 
 * **Dynamic Prompting:** Map specific instructions (e.g., "Summarize in Urdu" or "Refactor Code") to the AI UI.
 * **Context Awareness:** The AI interprets your Markdown structure to provide relevant suggestions.
 
